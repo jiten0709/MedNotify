@@ -33,3 +33,7 @@ Once enabled, navigate to "App passwords" and generate a new password specifical
 Update Script with App Password:
 
 Replace the PASSWORD variable in your .env file with the generated App Password, not your regular Gmail password.
+
+## To run the application
+
+- python main.py path-to-file.xlsx

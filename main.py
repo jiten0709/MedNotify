@@ -10,22 +10,22 @@ load_dotenv()
 EMAIL = os.getenv('EMAIL_ID')
 PASSWORD = os.getenv('EMAIL_PASSWORD')
 
-def send_email(to_email, first_name, medicine, batch_no, expiry, po_header):
-    subject = "Your Subject"
-    body = f"""Dear {first_name},
+def send_email(to_email, name, medicine, batch_no, expiry, po_header):
+    subject = f"Medicine Expiry Notification: {medicine}"
+    body = f"""Dear {name},
 
-    This is to inform you that medicine {medicine} having the batch number of {batch_no} is expiring on {expiry} against PO {po_header}.
+This is to inform you that medicine {medicine} having the batch number of {batch_no} is expiring on {expiry} against PO {po_header}.
 
-    You are kindly requested to take necessary action.
+You are kindly requested to take necessary action.
 
-    Thanks.
+Thanks.
 
-    Regards,
-    Vipul Mishra
-    Mangala Healthcare Services
-    +91-9620300567
+Regards,
+Vipul Mishra
+Mangala Healthcare Services
++91-9620300567
 
-    Powered by – Mars System & Solution"""
+Powered by – Mars System & Solution"""
 
     msg = EmailMessage()
     msg['Subject'] = subject
@@ -44,27 +44,27 @@ def send_email(to_email, first_name, medicine, batch_no, expiry, po_header):
 
 def process_excel(file_path):
     try:
-        # Read the Excel file, assuming headers are in the fourth row (index 3)
-        df = pd.read_excel(file_path, header=3)
+        # Load all sheets in the Excel file
+        excel_data = pd.ExcelFile(file_path)
         
-        # Read the header values from the first two rows
-        header_df = pd.read_excel(file_path, header=None, nrows=2)
-        po_header_row1 = header_df.iloc[0, :].astype(str).str.cat(sep=' ')
-        po_header_row2 = header_df.iloc[1, :].astype(str).str.cat(sep=' ')
-        po_header = f"{po_header_row1} {po_header_row2}"
-        
-        # Print the columns to debug
-        print("Columns in the Excel file:", df.columns)
-        
-        for _, row in df.iterrows():
-            send_email(
-                to_email=row['Email'],
-                first_name=row['Contact Person Name'],
-                medicine=row['Description'],
-                batch_no=row['Batch No'],
-                expiry=row['Expiry'],
-                po_header=po_header  # Use the combined header value
-            )
+        # Iterate through each sheet
+        for sheet_name in excel_data.sheet_names:
+            print(f"Processing sheet: {sheet_name}")
+            po_header = sheet_name
+            
+            # Read the data starting from the fourth row
+            df = pd.read_excel(file_path, sheet_name=sheet_name, header=2)
+            
+            for _, row in df.iterrows():
+                name = row['Contact Person Name'] or row['Name']
+                send_email(
+                    to_email=row['Email'],
+                    name=name,
+                    medicine=row['Description'],
+                    batch_no=row['Batch No'],
+                    expiry=row['Expiry'],
+                    po_header=po_header
+                )
     except Exception as e:
         print(f"Error processing Excel file: {e}")
 
@@ -73,4 +73,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Send emails based on Excel data.")
     parser.add_argument("file_path", help="Path to the Excel file.")
     args = parser.parse_args()
+
     process_excel(args.file_path)
