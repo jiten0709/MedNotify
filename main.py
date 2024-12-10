@@ -3,8 +3,8 @@ from dotenv import load_dotenv
 import smtplib
 from email.message import EmailMessage
 import pandas as pd
+from datetime import datetime, timedelta
 
-# Load environment variables from .env file
 load_dotenv()
 
 EMAIL = os.getenv('EMAIL_ID')
@@ -44,7 +44,6 @@ Powered by – Mars System & Solution"""
 
 def process_excel(file_path):
     try:
-        # Load all sheets in the Excel file
         excel_data = pd.ExcelFile(file_path)
         
         # Iterate through each sheet
@@ -52,19 +51,34 @@ def process_excel(file_path):
             print(f"Processing sheet: {sheet_name}")
             po_header = sheet_name
             
-            # Read the data starting from the fourth row
+            # Read the data starting from the 3rd row
             df = pd.read_excel(file_path, sheet_name=sheet_name, header=2)
             
+            current_date = datetime.now()
+            four_months_ahead = current_date + timedelta(days=120)
+            
+            # Iterate over each row in the DataFrame
             for _, row in df.iterrows():
-                name = row['Contact Person Name'] or row['Name']
-                send_email(
-                    to_email=row['Email'],
-                    name=name,
-                    medicine=row['Description'],
-                    batch_no=row['Batch No'],
-                    expiry=row['Expiry'],
-                    po_header=po_header
-                )
+                try:
+                    expiry_date = pd.to_datetime(row['Expiry'], errors='coerce')
+                    if pd.isna(expiry_date):
+                        continue  # Skip if expiry date is invalid
+                    
+                    # Check if expiry date is within the next 4 months
+                    if current_date <= expiry_date <= four_months_ahead:
+                        name = row.get('Contact Person Name', '') or row.get('Name', '')
+                        send_email(
+                            to_email=row['Email'],
+                            name=name,
+                            medicine=row['Description'],
+                            batch_no=row['Batch No'],
+                            expiry=expiry_date.strftime('%Y-%m-%d'),
+                            po_header=po_header
+                        )
+                        
+                        # print(f"to: {row['Email']} | name: {name} | medicine: {row['Description']} | batch no: {row['Batch No']} | expiry: {expiry_date.strftime('%Y-%m-%d')} po header: {po_header}")
+                except Exception as row_error:
+                    print(f"Error processing row: {row_error}")
     except Exception as e:
         print(f"Error processing Excel file: {e}")
 

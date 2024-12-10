@@ -11,6 +11,7 @@ MedNotify is a simple command-line tool that reads data from an Excel file and s
 ## Prerequisites
 
 - Python 3.7 or higher.
+
 - Create a virtual environment and install the required Python libraries:
 
 ```
@@ -18,6 +19,8 @@ MedNotify is a simple command-line tool that reads data from an Excel file and s
 2. source .venv/bin/activate
 3. pip install -r requirements.txt
 ```
+
+- Refer sample.xlsx for file structure.
 
 ## For .env file
 
